@@ -2,8 +2,10 @@
 
 user_util()
 {
-  if [ ! -x useradd ] || [ ! -x userdel ]; then
-   echo "user* commands not found. Try to execute with sudo"
+  useradd_path=$(which useradd)
+  userdel_path=$(which userdel)
+  if [ ! -x "$useradd_path" ] || [ ! -x "$userdel_path" ]; then
+   echo "Error some of [useradd, userdel] missing or invalid. Try to execute with sudo"
    exit 9
   fi
 
