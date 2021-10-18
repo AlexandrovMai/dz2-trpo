@@ -21,7 +21,7 @@ user_util()
 
     local create_dir="-m"
     local dircmd=""
-    if ! [ -z "${directory+x}" ]; then
+    if ! [ -z "$directory" ]; then
       dircmd="-d $directory"
       if [ -d "$directry" ]; then
        echo "$directory exist. New one will not been created"
@@ -113,20 +113,19 @@ EOF
   }
 
   local user=$2
-
-  if ! [ -z "${user+x}" ]; then
+  if ! [ -z "$user" ]; then
     usage
   fi
 
   case "$1" in
     "add")
-       add_user "$2"
+       add_user "$user"
        ;;
     "delete")
-       delete_user "$2"
+       delete_user "$user"
        ;;
      "check")
-       check_user "$2"
+       check_user "$user"
        ;;
      *)
        usage
