@@ -114,7 +114,7 @@ EOF
 
   local user=$2
 
-  if [ -z "${user+x}" ]; then
+  if ! [ -z "${user+x}" ]; then
     usage
   fi
 
