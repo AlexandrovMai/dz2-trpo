@@ -1,0 +1,135 @@
+#!/bin/bash
+
+user_util()
+{
+  if [ ! -x useradd ] || [ ! -x userdel ]; then
+   echo "user* commands not found. Try to execute with sudo"
+   exit 9
+  fi
+
+  trap 'graceful_exit' SIGINT
+
+
+  add_user()
+  {
+    local user="$1"
+    local directory
+    echo "Adding user $user"
+    read -p "Enter home directory for $user [leave blank for default]: " directory
+
+    local create_dir="-m"
+    local dircmd=""
+    if ! [ -z "${directory+x}" ]; then
+      dircmd="-d $directory"
+      if [ -d "$directry" ]; then
+       echo "$directory exist. New one will not been created"
+       create_dir=""
+      fi
+    fi
+
+    # -s $SHELL to create .bashrc
+    if ! useradd -s $SHELL $create_dir $dircmd $user; then
+      echo "error creating user"
+      exit 2
+    fi
+
+    local set_pass
+    while [ "${set_pass,,}" != "y" ] && [ "${set_pass,,}" != "n" ]; do
+      read -p "Should set password for $user? [Y/n]: " set_pass
+    done
+
+    if [ "${set_pass,,}" = "y" ]; then passwd "$user"; fi
+
+    echo "You can set env variables for user $user."
+    echo "Use env=val pattern."
+    echo "Type 'n' for exit or press Ctrl+C"
+    local user_home="$(eval echo "~$user")"
+    local ex
+    while : ; do
+        local env_variable
+        read -p "=> " ex
+        if [ "${ex,,}" = "n" ]; then
+          graceful_exit
+        fi
+
+        if ! echo "export $ex" >> "$user_home/.bashrc"; then
+          echo "Error adding environment variable"
+          exit 4
+        else
+          echo "Success"
+        fi
+    done
+  }
+
+  delete_user()
+  {
+    local user="$1"
+    echo "Deleting user $user"
+    local del_home=""
+    while [ "${del_home,,}" != "y" ] && [ "${del_home,,}" != "n" ]; do
+      read -p "Should delete ${user}s home directory? [Y/n]: " del_home
+    done
+    local del_home_flag=""
+    if  [ "${del_home,,}" = "y" ]; then del_home_flag="-r"; fi
+
+    if ! userdel $del_home_flag $user; then
+      echo "Error deleting user"
+      exit 5
+    fi
+    echo "Success"
+  }
+
+  check_user()
+  {
+    local user="$1"
+    if ! id -u "$user" >/dev/null 2>&1; then
+      echo "User $user not exists"
+      graceful_exit
+    fi
+
+    echo "User $user exists"
+  }
+
+  usage()
+  {
+    usage_text=$(cat<<EOF
+user-util <command> <username>
+ commands:
+   add - add user
+   delete - delete user
+   check - check user information
+EOF
+)
+  echo "$usage_text"
+  exit 1
+  }
+
+  graceful_exit()
+  {
+    echo "Bye...."
+    exit 0
+  }
+
+  local user=$2
+
+  if [ -z "${user+x}" ]; then
+    usage
+  fi
+
+  case "$1" in
+    "add")
+       add_user "$2"
+       ;;
+    "delete")
+       delete_user "$2"
+       ;;
+     "check")
+       check_user "$2"
+       ;;
+     *)
+       usage
+       ;;
+  esac
+}
+
+user_util "$@"
